@@ -1,0 +1,57 @@
+body {background-color: #f2f2f2;}
+
+h1, h2 {
+	text-align: center;
+}
+header {
+	font-size: 30px;
+	border-bottom: 1px solid grey;
+	background-color: #99e6ff;
+}
+
+label {
+	font-size: 24px;
+	padding: 5px;
+}
+#uploadButton {
+	padding: 10px;
+	font-size: 20px;
+	background-color: #ccffb3;
+	border: 1px solid grey;
+}
+.errorBorder {
+	border: 2px solid red;
+}
+
+.textIndent {
+	text-indent: 25px;
+}
+
+.chart {
+	height: 1000px;
+	background-color: white !important;
+}
+
+
+/* display flex*/
+.flex-container {
+  display: flex;
+  flex-direction: column;
+  border: 2px solid grey;
+  border-bottom: 1px solid grey; 
+  /* as footer is the last child of this container, it already has a border of 1px, so to make it 2px the border-bottom of container will be set to 1px*/
+}
+.flex-container > section {
+  background-color: #f1f1f1;
+  text-align: center;
+  padding: 20px 0px 20px;
+  border-bottom: 1px solid grey;
+}
+
+footer {
+	text-align: center;
+	font-size: 25px;
+	font-weight: bold;
+	padding: 5px;
+	margin: auto;
+}
