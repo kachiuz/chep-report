@@ -20,7 +20,6 @@ var ExcelToJSON = function() {
             var json_object = JSON.stringify(XL_row_object);
 
 		let parsedObject = JSON.parse(json_object);
-		//console.log(parsedObject);
 		var size = Object.keys(parsedObject).length;
 
 		
@@ -69,9 +68,9 @@ var ExcelToJSON = function() {
 			//replace ' with '' as it acts an sql injection
 			//this is only neccesasry for suppliers name, but just in case I added it to all values.
 			parsedObject[i]["Other Party"] = parsedObject[i]["Other Party"].replace(/'/g, "''");
-			parsedObject[i]["Transaction Type"] = parsedObject[i]["Transaction Type"].replace(/,/g, "''");
-			parsedObject[i]["Quantity"] = parsedObject[i]["Quantity"].replace(/,/g, "''");
-			parsedObject[i]["Shipment Date"] = parsedObject[i]["Shipment Date"].replace(/,/g, "''");
+			parsedObject[i]["Transaction Type"] = parsedObject[i]["Transaction Type"].replace(/'/g, "''");
+			parsedObject[i]["Quantity"] = parsedObject[i]["Quantity"].replace(/'/g, "''");
+			parsedObject[i]["Shipment Date"] = parsedObject[i]["Shipment Date"].replace(/'/g, "''");
 			
 			//add values to arrays
 			transactionTypeAray.push(parsedObject[i]["Transaction Type"]);
