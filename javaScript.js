@@ -20,7 +20,7 @@ var ExcelToJSON = function() {
             var json_object = JSON.stringify(XL_row_object);
 
 		let parsedObject = JSON.parse(json_object);
-		var size = Object.keys(parsedObject).length;
+		let size = Object.keys(parsedObject).length;
 
 		
 		//check if the names in excel are proper.
@@ -45,10 +45,10 @@ var ExcelToJSON = function() {
 
 		//In case the page wasn't reloaded and several files are being uploaded one after another
 		//I must make sure each time the previuos values that were stored in these arrays are deleted.
-		let transactionTypeAray = []; //Transaction Type
-		let otherPartyArray = [] //Other Party ---> suppliers name
-		let quantityArray = []; //Quantity
-		let shipmentDateArray = []; //Shipment Date
+		transactionTypeAray = []; //Transaction Type
+		otherPartyArray = [] //Other Party ---> suppliers name
+		quantityArray = []; //Quantity
+		shipmentDateArray = []; //Shipment Date
 		
 		
 		for (let i = 0; i < size; i++) {
@@ -56,17 +56,22 @@ var ExcelToJSON = function() {
 			//since in back end I use explode function and a comma as a seperator, I must make sure there are no comas left in any of the strings
 			//hence will replace all comas with empty space;
 			
-			//remove comma from number
+			//remove commas from all rows
+			//this is only neccesasry for suppliers name, but just in case I remove it from all values.
 			parsedObject[i]["Transaction Type"] = parsedObject[i]["Transaction Type"].replace(/,/g, "");
 			parsedObject[i]["Other Party"] = parsedObject[i]["Other Party"].replace(/,/g, "");
 			parsedObject[i]["Quantity"] = parsedObject[i]["Quantity"].replace(/,/g, "");
 			parsedObject[i]["Shipment Date"] = parsedObject[i]["Shipment Date"].replace(/,/g, "");
 			
 			//remove '&' from strings as in php it stops the explode function.
+			//this is only neccesasry for suppliers name, but just in case I remove it from all values.
 			parsedObject[i]["Other Party"] = parsedObject[i]["Other Party"].replace(/&/g, "");
+			parsedObject[i]["Transaction Type"] = parsedObject[i]["Transaction Type"].replace(/&/g, "");
+			parsedObject[i]["Quantity"] = parsedObject[i]["Quantity"].replace(/&/g, "");
+			parsedObject[i]["Shipment Date"] = parsedObject[i]["Shipment Date"].replace(/&/g, "");
 			
 			//replace ' with '' as it acts an sql injection
-			//this is only neccesasry for suppliers name, but just in case I added it to all values.
+			//this is only neccesasry for suppliers name, but just in case I remove it from all values.
 			parsedObject[i]["Other Party"] = parsedObject[i]["Other Party"].replace(/'/g, "''");
 			parsedObject[i]["Transaction Type"] = parsedObject[i]["Transaction Type"].replace(/'/g, "''");
 			parsedObject[i]["Quantity"] = parsedObject[i]["Quantity"].replace(/'/g, "''");
@@ -77,10 +82,7 @@ var ExcelToJSON = function() {
 			otherPartyArray.push(parsedObject[i]["Other Party"]);
 			quantityArray.push(parsedObject[i]["Quantity"]);
 			shipmentDateArray.push(parsedObject[i]["Shipment Date"]);
-			
-			
 		}	
-		console.log(otherPartyArray[99]);
 		//fetch all arrays and add them to the string that will be sent over to back end.
 			let str = 'transactionTypeAray='+transactionTypeAray+'&'+'otherPartyArray='+otherPartyArray+'&';
 			str+='quantityArray='+quantityArray+'&'+'shipmentDateArray='+shipmentDateArray+'&';
