@@ -107,7 +107,7 @@ if ($num>0){
 	while ($row = mysqli_fetch_array($resulSelectData, MYSQLI_ASSOC))
 	{	
 		$supplierName = $row['otherParty'];	
-		$monthlySum = $row['monthlySum'];	
+		$monthlySum = ROUND($row['monthlySum'],0);	
 		$yearMonthDate = $row['yearMonthDate'];	
 		
 		//single associative array to store the data for month and quantity of pallets delivered
@@ -116,7 +116,8 @@ if ($num>0){
 		if (!array_key_exists($supplierName, $resultArray)) {
 			$resultArray += array($supplierName=>$monthAndQuantity);
 		} else {
-			array_push($resultArray[$supplierName], $monthlySum);
+			$resultArray[$supplierName][$yearMonthDate]= $monthlySum;
+			//array_push($resultArray[$supplierName], $monthlySum);
 		}
 	}
 } else {
@@ -125,9 +126,103 @@ if ($num>0){
 	Die ($jsonFile = json_encode($arrayForFrontEnd));	
 }
 
+
+//------------------------------------------NEW CODE------------------------------------------------------------------//
+
+//--a query to determine how many months of transfers have been uploaded
+$queryCountMonth = "
+	SELECT 
+		COUNT(DISTINCT(yearMonthDate)) AS numberOfMonths
+	FROM ChepReport
+		WHERE transactionType = 'Transfer In'";
+$resultCountMonth = mysqli_query($shortageReportDB, $queryCountMonth);
+$num = mysqli_num_rows($resultCountMonth);
+
+if ($num>0){
+	while ($row = mysqli_fetch_array($resultCountMonth, MYSQLI_ASSOC))
+	{	
+		$numberOfMonths = $row['numberOfMonths'];
+		
+	}
+} else {
+	$errors[] = 'Error! Please check that rows in excel file are not empty.';
+	$arrayForFrontEnd += array("errors"=>$errors);
+	Die ($jsonFile = json_encode($arrayForFrontEnd));	
+}
+
+//an array to store month values
+$distinctMonths = array();
+//a query to select distinct month values 
+$querySelectDistinctMonths = "
+	SELECT 
+		DISTINCT(yearMonthDate) AS distinctMonths
+	FROM ChepReport
+		WHERE transactionType = 'Transfer In'";
+$resultSelectDistinctMonths = mysqli_query($shortageReportDB, $querySelectDistinctMonths);
+$num = mysqli_num_rows($resultSelectDistinctMonths);
+
+if ($num>0){
+	while ($row = mysqli_fetch_array($resultSelectDistinctMonths, MYSQLI_ASSOC))
+	{	
+		$monthValue = $row['distinctMonths'];
+		array_push($distinctMonths, $monthValue);	
+	}
+} else {
+	$errors[] = 'Error! Please check that rows in excel file are not empty.';
+	$arrayForFrontEnd += array("errors"=>$errors);
+	Die ($jsonFile = json_encode($arrayForFrontEnd));	
+}
+
+
+//in order to loop associative array I need distinct supplier names values
+//an array to store month values
+$distinctSuppliersNamesArray = array();
+//a query to select distinct month values 
+$querySelectDistinctSuppliersNames = "
+	SELECT 
+		DISTINCT(otherParty) AS distinctSupplierName
+	FROM ChepReport
+		WHERE transactionType = 'Transfer In'";
+$resultSelectDistinctSuppliersNames = mysqli_query($shortageReportDB, $querySelectDistinctSuppliersNames);
+$num = mysqli_num_rows($resultSelectDistinctSuppliersNames);
+
+if ($num>0){
+	while ($row = mysqli_fetch_array($resultSelectDistinctSuppliersNames, MYSQLI_ASSOC))
+	{	
+		$distinctSupplierName = $row['distinctSupplierName'];
+		array_push($distinctSuppliersNamesArray, $distinctSupplierName);	
+	}
+} else {
+	$errors[] = 'Error! Please check that rows in excel file are not empty.';
+	$arrayForFrontEnd += array("errors"=>$errors);
+	Die ($jsonFile = json_encode($arrayForFrontEnd));	
+}
+
+
+
+//CODE THAT FILLS 0 VALUES TO A RESULT ARRAY------------------------------------------------------//
+//find the distinct number of suppliers, I could also do it by adding this to previuos SQL query
+//COUNT(DISTINCT(otherParty)) AS numberOfSuppliers
+//but I can extract the number of suppliers from the resultArray length.
+$numberOfSuppliers = Count($resultArray );
+//first I need to loop through all the suppliers
+for ($i = 0; $i <$numberOfSuppliers; $i++){
+	
+	//in this loop I will check if each supplier has a quantity pallet for each month
+	//I will do it by checking if an !array_key_exists for the month, if it does, 
+	//nothing will be done, if it does not, a month value will be added as a key and 0 as it's value.
+	for ($x = 0; $x <$numberOfMonths; $x++){
+		
+		if(!array_key_exists($distinctMonths[$x], $resultArray[$distinctSuppliersNamesArray[$i]])){
+			
+			$resultArray[$distinctSuppliersNamesArray[$i]][$distinctMonths[$x]]= 0;
+		}		
+	}
+}
+//------------------------------------END OF NEW CODE---------------------------------------------------------------//
 mysqli_close($shortageReportDB);
 
-$arrayForFrontEnd += array("errors"=>$errors, "test"=>$resultArray);
+$arrayForFrontEnd += array("errors"=>$errors, "resultArray"=>$resultArray, "distinctMonths"=>$distinctMonths, "numberOfMonths"=>$numberOfMonths);
 
 $jsonFile = json_encode($arrayForFrontEnd);
 echo $jsonFile;
