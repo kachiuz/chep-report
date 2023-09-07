@@ -269,12 +269,33 @@ if ($num>0){
 	ReportErrorForEmptyExcelFile();
 }
 
+//a query to select MIN and MAX dates for transfers/returns
+$querySelectMinMaxDates = "
+	SELECT 
+		MIN(shipmentDate) AS startDate,
+		MAX(shipmentDate) AS endDate
+	FROM ChepReport
+		WHERE transactionType IN('Returns', 'Transfer IN')";
+$resultMinMaxDates= mysqli_query($shortageReportDB, $querySelectMinMaxDates);
+$num = mysqli_num_rows($resultMinMaxDates);
+
+if ($num>0){
+	while ($row = mysqli_fetch_array($resultMinMaxDates, MYSQLI_ASSOC))
+	{	
+		//since this value is negative, I need to change that in order to draw a chart, hence the -
+		$startDate = $row['startDate'];	
+		$endDate = $row['endDate'];	
+	}
+} else {
+	ReportErrorForEmptyExcelFile();
+}
 
 mysqli_close($shortageReportDB);
 
 $arrayForFrontEnd += array("errors"=>$errors, "resultArray"=>$resultArray, "distinctMonths"=>$distinctMonths, "numberOfMonths"=>$numberOfMonths);
 $arrayForFrontEnd += array("totalPalletsTransfered"=>$totalPalletsTransfered, "totalPalletsReturned"=>$totalPalletsReturned);
 $arrayForFrontEnd += array("distinctSuppliersNamesArray"=>$distinctSuppliersNamesArray);
+$arrayForFrontEnd += array("startDate"=>$startDate, "endDate"=>$endDate);
 
 $jsonFile = json_encode($arrayForFrontEnd);
 echo $jsonFile;
