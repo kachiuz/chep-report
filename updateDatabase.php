@@ -6,6 +6,15 @@ error_reporting( E_ALL );
 $arrayForFrontEnd = array();
 $errors = array();
 
+
+//report error function which gets called if the row inside the excel file are empty
+function ReportErrorForEmptyExcelFile() {
+	$arrayForFrontEnd = array(); //needs to be redeclared, as glogal variables are not accessible inside PHP function
+	$errors[] = 'Error! Please check that rows in excel file are not empty.';
+	$arrayForFrontEnd += array("errors"=>$errors);
+	Die ($jsonFile = json_encode($arrayForFrontEnd));
+}
+
 //check if arrays have been submited;
 
 //let's count how many of the preferable arrays have not been submitted.
@@ -62,8 +71,12 @@ for ($i = 0; $i <$arrayLength; $i++){
 
 
 	//since suppliers name might contain characters that interfare with insert into query, need to make sure this is avoided.
-	//$otherPartyArray[$i] = htmlentities(mysqli_real_escape_string($shortageReportDB, $otherPartyArray[$i]));
-	//$note = html_entity_decode($row4['note']); - to decode htmlentities
+	$otherPartyArray[$i] = htmlentities(mysqli_real_escape_string($shortageReportDB, $otherPartyArray[$i]));
+	
+	//just in case I will do the same safety check with other values as well
+	$transactionTypeAray[$i] = htmlentities(mysqli_real_escape_string($shortageReportDB, $transactionTypeAray[$i]));
+	$quantityArray[$i] = htmlentities(mysqli_real_escape_string($shortageReportDB, $quantityArray[$i]));
+	$shipmentDateArray[$i] = htmlentities(mysqli_real_escape_string($shortageReportDB, $shipmentDateArray[$i]));
 	//I could check other values as well, but might do that later.
 	$queryInsertData2 = "INSERT INTO ChepReport (
 		transactionType, 
@@ -106,7 +119,7 @@ $resultArray = array();
 if ($num>0){
 	while ($row = mysqli_fetch_array($resulSelectData, MYSQLI_ASSOC))
 	{	
-		$supplierName = $row['otherParty'];	
+		$supplierName = html_entity_decode($row['otherParty']);	
 		$monthlySum = ROUND($row['monthlySum'],0);	
 		$yearMonthDate = $row['yearMonthDate'];	
 		
@@ -121,9 +134,7 @@ if ($num>0){
 		}
 	}
 } else {
-	$errors[] = 'Error! Please check that rows in excel file are not empty.';
-	$arrayForFrontEnd += array("errors"=>$errors);
-	Die ($jsonFile = json_encode($arrayForFrontEnd));	
+	ReportErrorForEmptyExcelFile();
 }
 
 
@@ -145,9 +156,7 @@ if ($num>0){
 		
 	}
 } else {
-	$errors[] = 'Error! Please check that rows in excel file are not empty.';
-	$arrayForFrontEnd += array("errors"=>$errors);
-	Die ($jsonFile = json_encode($arrayForFrontEnd));	
+	ReportErrorForEmptyExcelFile();
 }
 
 //an array to store month values
@@ -168,9 +177,7 @@ if ($num>0){
 		array_push($distinctMonths, $monthValue);	
 	}
 } else {
-	$errors[] = 'Error! Please check that rows in excel file are not empty.';
-	$arrayForFrontEnd += array("errors"=>$errors);
-	Die ($jsonFile = json_encode($arrayForFrontEnd));	
+	ReportErrorForEmptyExcelFile();
 }
 
 
@@ -189,13 +196,12 @@ $num = mysqli_num_rows($resultSelectDistinctSuppliersNames);
 if ($num>0){
 	while ($row = mysqli_fetch_array($resultSelectDistinctSuppliersNames, MYSQLI_ASSOC))
 	{	
-		$distinctSupplierName = $row['distinctSupplierName'];
+      	//has to be decoded !!!
+		$distinctSupplierName = html_entity_decode($row['distinctSupplierName']);
 		array_push($distinctSuppliersNamesArray, $distinctSupplierName);	
 	}
 } else {
-	$errors[] = 'Error! Please check that rows in excel file are not empty.';
-	$arrayForFrontEnd += array("errors"=>$errors);
-	Die ($jsonFile = json_encode($arrayForFrontEnd));	
+	ReportErrorForEmptyExcelFile();
 }
 
 
@@ -220,9 +226,55 @@ for ($i = 0; $i <$numberOfSuppliers; $i++){
 	}
 }
 //------------------------------------END OF NEW CODE---------------------------------------------------------------//
+
+
+//NEW CODE FOR SUMS OF TRANSFERED PALLETS IN AND RETURNED.
+$totalPalletsTransfered = 0;
+//a query to select SUM of pallets transfered in
+$querySelectPalletSum = "
+	SELECT 
+		SUM(quantity) AS totalPalletsTransfered
+	FROM ChepReport
+		WHERE transactionType = 'Transfer In'";
+$resultPalletSum= mysqli_query($shortageReportDB, $querySelectPalletSum);
+$num = mysqli_num_rows($resultPalletSum);
+
+if ($num>0){
+	while ($row = mysqli_fetch_array($resultPalletSum, MYSQLI_ASSOC))
+	{	
+		$totalPalletsTransfered = ROUND($row['totalPalletsTransfered'],0);	
+	}
+} else {
+	ReportErrorForEmptyExcelFile();	
+}
+
+
+$totalPalletsReturned = 0;
+//a query to select SUM of pallets returned from our site
+$querySelectPalletSumReturned = "
+	SELECT 
+		SUM(quantity) AS totalPalletsReturned
+	FROM ChepReport
+		WHERE transactionType = 'Returns'";
+$resultPalletSumReturned= mysqli_query($shortageReportDB, $querySelectPalletSumReturned);
+$num = mysqli_num_rows($resultPalletSumReturned);
+
+if ($num>0){
+	while ($row = mysqli_fetch_array($resultPalletSumReturned, MYSQLI_ASSOC))
+	{	
+		//since this value is negative, I need to change that in order to draw a chart, hence the -
+		$totalPalletsReturned = ROUND(-$row['totalPalletsReturned'],0);	
+	}
+} else {
+	ReportErrorForEmptyExcelFile();
+}
+
+
 mysqli_close($shortageReportDB);
 
 $arrayForFrontEnd += array("errors"=>$errors, "resultArray"=>$resultArray, "distinctMonths"=>$distinctMonths, "numberOfMonths"=>$numberOfMonths);
+$arrayForFrontEnd += array("totalPalletsTransfered"=>$totalPalletsTransfered, "totalPalletsReturned"=>$totalPalletsReturned);
+$arrayForFrontEnd += array("distinctSuppliersNamesArray"=>$distinctSuppliersNamesArray);
 
 $jsonFile = json_encode($arrayForFrontEnd);
 echo $jsonFile;

@@ -69,14 +69,7 @@ var ExcelToJSON = function() {
 			parsedObject[i]["Transaction Type"] = parsedObject[i]["Transaction Type"].replace(/&/g, "");
 			parsedObject[i]["Quantity"] = parsedObject[i]["Quantity"].replace(/&/g, "");
 			parsedObject[i]["Shipment Date"] = parsedObject[i]["Shipment Date"].replace(/&/g, "");
-			
-			//replace ' with '' as it acts an sql injection
-			//this is only neccesasry for suppliers name, but just in case I remove it from all values.
-			parsedObject[i]["Other Party"] = parsedObject[i]["Other Party"].replace(/'/g, "''");
-			parsedObject[i]["Transaction Type"] = parsedObject[i]["Transaction Type"].replace(/'/g, "''");
-			parsedObject[i]["Quantity"] = parsedObject[i]["Quantity"].replace(/'/g, "''");
-			parsedObject[i]["Shipment Date"] = parsedObject[i]["Shipment Date"].replace(/'/g, "''");
-			
+						
 			//add values to arrays
 			transactionTypeAray.push(parsedObject[i]["Transaction Type"]);
 			otherPartyArray.push(parsedObject[i]["Other Party"]);
