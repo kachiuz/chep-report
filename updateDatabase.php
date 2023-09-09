@@ -166,7 +166,9 @@ $querySelectDistinctMonths = "
 	SELECT 
 		DISTINCT(yearMonthDate) AS distinctMonths
 	FROM ChepReport
-		WHERE transactionType = 'Transfer In'";
+		WHERE transactionType = 'Transfer In'
+	ORDER BY 
+		yearMonthDate ASC";
 $resultSelectDistinctMonths = mysqli_query($shortageReportDB, $querySelectDistinctMonths);
 $num = mysqli_num_rows($resultSelectDistinctMonths);
 
@@ -224,51 +226,54 @@ for ($i = 0; $i <$numberOfSuppliers; $i++){
 			$resultArray[$distinctSuppliersNamesArray[$i]][$distinctMonths[$x]]= 0;
 		}		
 	}
+	//sort the the inner array within suppliers name distincsMonths in ascending order.
+	ksort($resultArray[$distinctSuppliersNamesArray[$i]]);
 }
 //------------------------------------END OF NEW CODE---------------------------------------------------------------//
-
-
-//NEW CODE FOR SUMS OF TRANSFERED PALLETS IN AND RETURNED.
-$totalPalletsTransfered = 0;
-//a query to select SUM of pallets transfered in
+//update query for chart 2
+//store all possible transactions type names inside an array
+$transferTypesNamesArray = array("Admin IN","Admin OUT","Correction IN","Returns","Reversed Transfer IN","Transfer IN","Transfer OUT", "Unknown");
+$transferTypseSumsArray = array();
+$palletsIN = 0;
+$palletsOUT = 0;
 $querySelectPalletSum = "
 	SELECT 
-		SUM(quantity) AS totalPalletsTransfered
+		transactionType,
+		SUM(quantity) AS palletSum
 	FROM ChepReport
-		WHERE transactionType = 'Transfer In'";
+		WHERE 1
+	GROUP BY
+		transactionType
+	ORDER BY
+		transactionType
+	";
 $resultPalletSum= mysqli_query($shortageReportDB, $querySelectPalletSum);
 $num = mysqli_num_rows($resultPalletSum);
-
+$arrayIndex = 0;
 if ($num>0){
 	while ($row = mysqli_fetch_array($resultPalletSum, MYSQLI_ASSOC))
 	{	
-		$totalPalletsTransfered = ROUND($row['totalPalletsTransfered'],0);	
+		
+		$palletSum = ROUND($row['palletSum'],0);
+		//add pallet sum from row to either $palletsIN or PalletsOUT variable 
+		if($palletSum > 0) {
+			$palletsIN+=$palletSum;
+			
+		} else {
+			$palletsOUT += $palletSum;
+		}
+		//for chart I dont want negative values
+		$palletSum = abs($palletSum );
+		$transferTypseSumsArray += array($transferTypesNamesArray[$arrayIndex]=>$palletSum);
+		$arrayIndex++;
+
 	}
 } else {
 	ReportErrorForEmptyExcelFile();	
 }
 
-
-$totalPalletsReturned = 0;
-//a query to select SUM of pallets returned from our site
-$querySelectPalletSumReturned = "
-	SELECT 
-		SUM(quantity) AS totalPalletsReturned
-	FROM ChepReport
-		WHERE transactionType = 'Returns'";
-$resultPalletSumReturned= mysqli_query($shortageReportDB, $querySelectPalletSumReturned);
-$num = mysqli_num_rows($resultPalletSumReturned);
-
-if ($num>0){
-	while ($row = mysqli_fetch_array($resultPalletSumReturned, MYSQLI_ASSOC))
-	{	
-		//since this value is negative, I need to change that in order to draw a chart, hence the -
-		$totalPalletsReturned = ROUND(-$row['totalPalletsReturned'],0);	
-	}
-} else {
-	ReportErrorForEmptyExcelFile();
-}
-
+//for chart I don't want to have negative values
+$palletsOUT = abs($palletsOUT );
 //a query to select MIN and MAX dates for transfers/returns
 $querySelectMinMaxDates = "
 	SELECT 
@@ -282,7 +287,6 @@ $num = mysqli_num_rows($resultMinMaxDates);
 if ($num>0){
 	while ($row = mysqli_fetch_array($resultMinMaxDates, MYSQLI_ASSOC))
 	{	
-		//since this value is negative, I need to change that in order to draw a chart, hence the -
 		$startDate = $row['startDate'];	
 		$endDate = $row['endDate'];	
 	}
@@ -290,12 +294,59 @@ if ($num>0){
 	ReportErrorForEmptyExcelFile();
 }
 
-mysqli_close($shortageReportDB);
+//----------------NEW CODE FOR CHART 3--------------//
+//loops to create data structure to store monthly sum of pallets grouped by transfer type
+$dataForTransferTypeChart = array();
+for ($i = 0; $i <Count($transferTypesNamesArray); $i++){
+	
+	for ($x = 0; $x <$numberOfMonths; $x++){
+					
+		$dataForTransferTypeChart[$transferTypesNamesArray[$i]][$distinctMonths[$x]]= 0;
+	}
+}
 
+//select data from database for chart 3
+//---------------SELECT DATA FROM DATABASE---------------//
+$querySelectDataForChart3 = "
+	SELECT 
+		transactionType, 
+		SUM(quantity) AS monthlySum, 
+		yearMonthDate 
+	FROM ChepReport
+		WHERE 1=1 
+	GROUP BY 
+		transactionType, 
+		yearMonthDate 
+	ORDER BY
+		yearMonthDate";
+$resulSelectDataForChart3 = mysqli_query($shortageReportDB, $querySelectDataForChart3);
+$num = mysqli_num_rows($resulSelectDataForChart3);
+
+if ($num>0){
+	while ($row = mysqli_fetch_array($resulSelectDataForChart3, MYSQLI_ASSOC))
+	{	
+
+		$transactionType = html_entity_decode($row['transactionType']);	
+		//for a chart I don't want negative values, hence the abs() function is used here
+		$monthlySum = abs(ROUND($row['monthlySum'],0));	
+
+		$yearMonthDate = $row['yearMonthDate'];
+
+		//update associative array value
+		$dataForTransferTypeChart[$transactionType][$yearMonthDate]= $monthlySum;
+
+	}
+} else {
+	ReportErrorForEmptyExcelFile();
+}
+
+mysqli_close($shortageReportDB);
 $arrayForFrontEnd += array("errors"=>$errors, "resultArray"=>$resultArray, "distinctMonths"=>$distinctMonths, "numberOfMonths"=>$numberOfMonths);
-$arrayForFrontEnd += array("totalPalletsTransfered"=>$totalPalletsTransfered, "totalPalletsReturned"=>$totalPalletsReturned);
 $arrayForFrontEnd += array("distinctSuppliersNamesArray"=>$distinctSuppliersNamesArray);
 $arrayForFrontEnd += array("startDate"=>$startDate, "endDate"=>$endDate);
+$arrayForFrontEnd += array("dataForTransferTypeChart"=>$dataForTransferTypeChart);
+$arrayForFrontEnd += array("transferTypseSumsArray"=>$transferTypseSumsArray);
+$arrayForFrontEnd += array("palletsIN"=>$palletsIN, "palletsOUT"=>$palletsOUT);
 
 $jsonFile = json_encode($arrayForFrontEnd);
 echo $jsonFile;
