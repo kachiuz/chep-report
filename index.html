@@ -10,6 +10,9 @@
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/jszip.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/xlsx.js"></script>
+		<script src="https://cdn.canvasjs.com/ga/canvasjs.min.js"></script>
+		
+		
 	</head>
 	<body>
 	<section class="flex-container">
@@ -21,7 +24,7 @@
 			<section>
 				<form enctype="multipart/form-data" class="topBottom5px">
 					<label for="uploadButton">Upload Transaction Report</label>
-					<input id="uploadButton" type=file  name="files[]">
+					<input id="uploadButton" type=file  name="files[]" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
 				</form>
 				<div id="responseDiv"></div>
 			</section>
@@ -30,8 +33,8 @@
 				<h2>CHEP Report Chart</h2>
 				<p>If the transaction report is uploaded successfully, a chart will appear in the section below.</p>
 			</section>
-			<section class="chart">
-				<p>CHART WILL BE LOADED IN THIS SECTION</p>
+			<section class="chart" id="chart1OuterContainer">
+				<div id="chart1InnerContainer"></div>
 			</section>
 		<section>
 		

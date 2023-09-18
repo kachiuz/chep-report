@@ -31,6 +31,15 @@ label {
 	height: 1000px;
 	background-color: white !important;
 }
+#chart1InnerContainer {
+	height: 980px; 
+	width: 98%;
+}
+#chart1OuterContainer {
+	height: 1000px;
+	width:100%;
+	overflow: scroll;
+}
 
 
 /* display flex*/
