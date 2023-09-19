@@ -121,7 +121,7 @@ const renderChart1 = (colorArrayForChart1, stripLinesArray, dataPointsArray, sta
 	  },
 	  axisY2: {
 		title: "Pallet Quantity",
-		titleFontSize: 14,
+		titleFontSize: 20,
 		labelFontSize: 14,
 		includeZero: true,
 	  },
@@ -232,14 +232,72 @@ const organizeDataForChart1 = (chartData, distinctSuppliersNamesArray, distinctM
 		 
 	 }
 }
-const generateChart2 = () => {
-	 
-	 
+const renderChart2 = (palletsIN, palletsOUT, startAndEndDate = " ") => {
+	CanvasJS.addColorSet("greenRed", ["green", "red"]);
+	let chart = new CanvasJS.Chart("chart2Container", {
+		animationEnabled: true,
+		exportEnabled: true,
+		colorSet: "greenRed",
+		theme: "light1",
+		title:{
+			fontSize: 20,
+		},
+		axisY: {
+			title: "Pallet Quantity",
+			labelFontSize: 14,
+			titleFontSize: 20,
+			includeZero: true,
+		},
+		data: [{        
+			type: "column",  
+			indexLabelFontSize: 14,
+			indexLabel: "{y}",
+			dataPoints: [      
+				{ y: palletsIN, label: "Pallets IN" },
+				{ y: palletsOUT,  label: "Pallets OUT" }
+			]
+		}]
+	});
+	chart.render();
+	chart.title.set("text", "Pallets In and OUT "+startAndEndDate);
  }
-const generateChart3 = () => {
+const renderChart3 = (transferTypseSumsArray, startAndEndDate = " ") => {
+	console.log(transferTypseSumsArray);
+	CanvasJS.addColorSet("multipleGreenRed", ["green", "red", "green","red", "red", "green","red", "gree"]);
+	let chart = new CanvasJS.Chart("chart3Container", {
+		animationEnabled: true,
+		exportEnabled: true,
+		colorSet: "multipleGreenRed",
+		theme: "light1",
+		title:{
+			fontSize: 20,
+		},
+		axisY: {
+			title: "Pallet Quantity",
+			labelFontSize: 14,
+			titleFontSize: 20,
+			includeZero: true,
+		},
+		data: [{        
+			type: "column",  
+			indexLabelFontSize: 14,
+			indexLabel: "{y}",
+			dataPoints: [      
+				{ y: transferTypseSumsArray["Admin IN"], label: "Admin IN" },
+				{ y: transferTypseSumsArray["Admin OUT"], label: "Admin OUT"},
+				{ y: transferTypseSumsArray["Correction IN"], label: "Correction IN" },
+				{ y: transferTypseSumsArray["Returns"], label: "Returns" },
+				{ y: transferTypseSumsArray["Reversed Transfer IN"], label: "Reversed Transfer IN" },
+				{ y: transferTypseSumsArray["Transfer IN"], label: "Transfer IN" },
+				{ y: transferTypseSumsArray["Transfer OUT"], label: "Transfer OUT" },
+				{ y: transferTypseSumsArray["Unknown"], label: "Unknown" },
+			]
+		}]
+	});
+	chart.render();
+	chart.title.set("text", "Transfers by type "+startAndEndDate);
+ }	
 	 
-	 
- }
 const generateChart4 = () => {
 	 
 	 
@@ -277,8 +335,8 @@ const generateChart4 = () => {
 					//a variable to store start and end date
 					let startAndEndDate = response.startDate+" - "+response.endDate;
 					organizeDataForChart1(response.resultArray, response.distinctSuppliersNamesArray, response.distinctMonths, startAndEndDate);
-					generateChart2();
-					generateChart3();
+					renderChart2(response.palletsIN, response.palletsOUT, startAndEndDate);
+					renderChart3(response.transferTypseSumsArray, startAndEndDate);
 					generateChart4();
 				}
 				
@@ -300,6 +358,7 @@ const generateChart4 = () => {
 	
 	//draw empty chart 1
 	renderChart1(colorArray, [{value: 0, label: "Suppliers", labelPlacement: "outside", labelBackgroundColor: "white", color: "transparent", labelFontColor: "black"}],[{label:"supplier", y:0}]);
-
+    renderChart2(0, 0);
+	renderChart3([0,0,0,0,0,0,0,0]);
 }
 document.addEventListener("DOMContentLoaded",start,false);

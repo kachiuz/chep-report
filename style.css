@@ -40,6 +40,19 @@ label {
 	width:100%;
 	overflow: scroll;
 }
+#chart2Container{
+	height: 400px;
+	display: inline-block;
+	width: 34%;
+	background-color: white;
+}
+#chart3Container{
+	height: 400px;
+	display: inline-block;
+	width: 64%;
+	background-color: white;
+}
+
 
 
 /* display flex*/
