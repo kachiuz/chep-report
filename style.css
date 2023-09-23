@@ -3,6 +3,18 @@ body {background-color: #f2f2f2;}
 h1, h2 {
 	text-align: center;
 }
+h2, p {
+	padding: 0px;
+	margin: 0px;
+}
+p {
+	font-size: 20px;
+	margin-top: 5px;
+}
+li {
+	font-size: 20px;
+}
+
 header {
 	font-size: 30px;
 	border-bottom: 1px solid grey;
@@ -19,6 +31,19 @@ label {
 	background-color: #ccffb3;
 	border: 1px solid grey;
 }
+.posRight {
+	position: absolute;
+	right: 2%;
+	top: 2%;
+}
+#responseDiv{
+	font-size: 20px;
+	font-weight: 600;
+	color: green;
+	height: 24px;
+	padding-top: 4px;
+}
+
 .errorBorder {
 	border: 2px solid red;
 }
@@ -28,52 +53,132 @@ label {
 }
 
 .chart {
-	height: 1000px;
+	height: 500px;
 	background-color: white !important;
 }
-#chart1InnerContainer {
-	height: 980px; 
-	width: 98%;
+#chart1InnerContainer, #chart4InnerContainer {
+	height: 480px; 
+	width: 100%;
 }
-#chart1OuterContainer {
-	height: 1000px;
-	width:100%;
+#chart1OuterContainer, #chart4OuterContainer {
+	height: 500px;
+	width:98%;
 	overflow: scroll;
 }
-#chart2Container{
+#chart2Container, #chart3Container{
 	height: 400px;
 	display: inline-block;
-	width: 34%;
-	background-color: white;
+    background-color: white;
+}
+#chart2Container {
+    width: 34%;
 }
 #chart3Container{
-	height: 400px;
-	display: inline-block;
-	width: 64%;
-	background-color: white;
+	width: 62%;
+	margin-left: 2%;
+}
+#chart4InnerContainer {
+	height: 480px; 
+	width: 100%;
+}
+#chart4OuterContainer {
+	height: 500px;
+	width:98%;
+	overflow: scroll;
+	/*background: white;*/
 }
 
-
-
 /* display flex*/
-.flex-container {
+.flex-container{
   display: flex;
   flex-direction: column;
   border: 2px solid grey;
-  border-bottom: 1px solid grey; 
-  /* as footer is the last child of this container, it already has a border of 1px, so to make it 2px the border-bottom of container will be set to 1px*/
+  border-bottom: 0px solid grey; 
 }
-.flex-container > section {
+.flex-container > section{
   background-color: #f1f1f1;
   text-align: center;
-  padding: 20px 0px 20px;
+  padding: 1%;
   border-bottom: 1px solid grey;
 }
 
-footer {
-	text-align: center;
+.borderTopAndBlue {
+	border-top: 1px solid grey;
+	background-color: #99e6ff !important;
+}
+
+/*user guide*/
+.mark {
 	font-size: 25px;
 	font-weight: bold;
-	padding: 5px;
-	margin: auto;
+	color: green;
+}
+.flex-container2{
+  display: inline-flex;
+  flex-direction: row;
+  border-right: 2px solid grey;
+  border-left: 2px solid grey;
+}
+.flex-container2 > div, .flex-container3 > section, .flex-container4 > section {
+  background-color: #e6ffe6;
+  padding: 1%;
+}
+.userGuide1{
+	border-right: 1px solid grey;
+}
+
+.textIndent{
+	text-indent: 10%;
+}
+/*centering image*/
+.center, .center2 {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;
+}
+.center2{
+	width: 100%;
+}
+/*3d flex container*/
+.flex-container3 {
+  display: inline-flex;
+  flex-direction: row;
+  border: 2px solid grey;
+  border-top: 1px solid grey;
+}
+.flex-container3  section:nth-of-type(1) {border-right: 1px solid grey;}
+
+.flex-container4 {
+  display: flex;
+  flex-direction: column;
+  border: 2px solid grey;
+  border-top: 0px;
+}
+.flex-container4 > footer {
+  background-color: #cccccc;
+  text-align: center;
+  padding: 5px;
+  font-size: 25px;
+  font-weight: bold;
+}
+.inline {
+	display: inline;
+}
+.alignCenter{
+	text-align: center;
+}
+/*Download Button*/
+/* Style buttons */
+.btn {
+  background-color: DodgerBlue;
+  border: none;
+  color: white;
+  padding: 12px 30px;
+  cursor: pointer;
+  font-size: 20px;
+}
+/* Darker background on mouse-over */
+.btn:hover {
+  background-color: RoyalBlue;
 }

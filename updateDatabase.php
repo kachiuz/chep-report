@@ -1,11 +1,15 @@
 <?php
 date_default_timezone_set("Europe/London");
-error_reporting( E_ALL );
-  ini_set( "display_errors", 1 ); 
-//fetch data from front end, two arrays are sent of product codes and quantities
-$arrayForFrontEnd = array();
+/*error_reporting( E_ALL );
+  ini_set( "display_errors", 1 ); */
 $errors = array();
-
+//only run scripts if the request method is post
+if ( $_SERVER[ 'REQUEST_METHOD' ] != 'POST' ){
+	$errors[] = 'Wrong Method!';
+	$arrayForFrontEnd = array("errors"=>$errors);
+	Die ($jsonFile = json_encode($arrayForFrontEnd));
+}
+$arrayForFrontEnd = array();
 
 //report error function which gets called if the row inside the excel file are empty
 function ReportErrorForEmptyExcelFile() {
@@ -31,13 +35,11 @@ if(!empty($_POST['otherPartyArray'])){
 }else{
 	$errorTrue++;
 }
-
 if(!empty($_POST['quantityArray'])){
 	$quantityArray = explode(",", $_POST['quantityArray']);
 }else{
 	$errorTrue++;
 }
-
 if(!empty($_POST['shipmentDateArray'])){
 	$shipmentDateArray = explode(",", $_POST['shipmentDateArray']);
 }else{
@@ -52,11 +54,6 @@ if($errorTrue>0){
 
 require('../shortageReport_connectDB.php');
 
-//Delete values from the current table 
-//this needs to be done to avoid duplicate data
-$queryDelete = "DELETE FROM ChepReport WHERE 1 = 1";
-
-$resultDelete = mysqli_query($shortageReportDB, $queryDelete);
 //find the length of array;
 $arrayLength = Count($transactionTypeAray );
 
@@ -68,8 +65,6 @@ for ($i = 0; $i <$arrayLength; $i++){
 	//compose proper date
 	$yearMonthDate = $splitShipmentDateArray[0].''.$splitShipmentDateArray[1];
 
-
-
 	//since suppliers name might contain characters that interfare with insert into query, need to make sure this is avoided.
 	$otherPartyArray[$i] = htmlentities(mysqli_real_escape_string($shortageReportDB, $otherPartyArray[$i]));
 	
@@ -77,7 +72,6 @@ for ($i = 0; $i <$arrayLength; $i++){
 	$transactionTypeAray[$i] = htmlentities(mysqli_real_escape_string($shortageReportDB, $transactionTypeAray[$i]));
 	$quantityArray[$i] = htmlentities(mysqli_real_escape_string($shortageReportDB, $quantityArray[$i]));
 	$shipmentDateArray[$i] = htmlentities(mysqli_real_escape_string($shortageReportDB, $shipmentDateArray[$i]));
-	//I could check other values as well, but might do that later.
 	$queryInsertData2 = "INSERT INTO ChepReport (
 		transactionType, 
 		otherParty, 
@@ -93,10 +87,7 @@ for ($i = 0; $i <$arrayLength; $i++){
 		
 		)";
 	$resultInsertdata2 = mysqli_query($shortageReportDB, $queryInsertData2);
-
 }
-
-//SELECT otherParty, SUM(quantity), yearMonthDate FROM `ChepReport` where `transactionType` = "Transfer In" GROUP by otherParty, yearMonthDate order by otherParty
 
 //---------------SELECT DATA FROM DATABASE---------------//
 $querySelectData = "
@@ -130,7 +121,6 @@ if ($num>0){
 			$resultArray += array($supplierName=>$monthAndQuantity);
 		} else {
 			$resultArray[$supplierName][$yearMonthDate]= $monthlySum;
-			//array_push($resultArray[$supplierName], $monthlySum);
 		}
 	}
 } else {
@@ -182,7 +172,6 @@ if ($num>0){
 	ReportErrorForEmptyExcelFile();
 }
 
-
 //in order to loop associative array I need distinct supplier names values
 //an array to store month values
 $distinctSuppliersNamesArray = array();
@@ -206,8 +195,6 @@ if ($num>0){
 	ReportErrorForEmptyExcelFile();
 }
 
-
-
 //CODE THAT FILLS 0 VALUES TO A RESULT ARRAY------------------------------------------------------//
 //find the distinct number of suppliers, I could also do it by adding this to previuos SQL query
 //COUNT(DISTINCT(otherParty)) AS numberOfSuppliers
@@ -220,20 +207,22 @@ for ($i = 0; $i <$numberOfSuppliers; $i++){
 	//I will do it by checking if an !array_key_exists for the month, if it does, 
 	//nothing will be done, if it does not, a month value will be added as a key and 0 as it's value.
 	for ($x = 0; $x <$numberOfMonths; $x++){
-		
 		if(!array_key_exists($distinctMonths[$x], $resultArray[$distinctSuppliersNamesArray[$i]])){
-			
 			$resultArray[$distinctSuppliersNamesArray[$i]][$distinctMonths[$x]]= 0;
 		}		
 	}
 	//sort the the inner array within suppliers name distincsMonths in ascending order.
 	ksort($resultArray[$distinctSuppliersNamesArray[$i]]);
 }
-//------------------------------------END OF NEW CODE---------------------------------------------------------------//
-//update query for chart 2
+//------------------------------------CHART 2---------------------------------------------------------------//
 //store all possible transactions type names inside an array
 $transferTypesNamesArray = array("Admin IN","Admin OUT","Correction IN","Returns","Reversed Transfer IN","Transfer IN","Transfer OUT", "Unknown");
+//array to store values for chart 2
 $transferTypseSumsArray = array();
+//fill array with 0 values and transfer types as names
+for ($i = 0; $i <Count($transferTypesNamesArray); $i++){
+	$transferTypseSumsArray[$transferTypesNamesArray[$i]]= 0;
+}
 $palletsIN = 0;
 $palletsOUT = 0;
 $querySelectPalletSum = "
@@ -249,12 +238,11 @@ $querySelectPalletSum = "
 	";
 $resultPalletSum= mysqli_query($shortageReportDB, $querySelectPalletSum);
 $num = mysqli_num_rows($resultPalletSum);
-$arrayIndex = 0;
 if ($num>0){
 	while ($row = mysqli_fetch_array($resultPalletSum, MYSQLI_ASSOC))
 	{	
-		
 		$palletSum = ROUND($row['palletSum'],0);
+		$transactionType = $row['transactionType'];
 		//add pallet sum from row to either $palletsIN or PalletsOUT variable 
 		if($palletSum > 0) {
 			$palletsIN+=$palletSum;
@@ -264,8 +252,8 @@ if ($num>0){
 		}
 		//for chart I dont want negative values
 		$palletSum = abs($palletSum );
-		$transferTypseSumsArray += array($transferTypesNamesArray[$arrayIndex]=>$palletSum);
-		$arrayIndex++;
+		$transferTypseSumsArray[$transactionType]=$palletSum;
+		//$arrayIndex++;
 
 	}
 } else {
@@ -294,19 +282,16 @@ if ($num>0){
 	ReportErrorForEmptyExcelFile();
 }
 
-//----------------NEW CODE FOR CHART 3--------------//
+//----------------------------------------------------CODE FOR CHART 3---------------------------------------//
 //loops to create data structure to store monthly sum of pallets grouped by transfer type
 $dataForTransferTypeChart = array();
 for ($i = 0; $i <Count($transferTypesNamesArray); $i++){
-	
-	for ($x = 0; $x <$numberOfMonths; $x++){
-					
+	for ($x = 0; $x <$numberOfMonths; $x++){		
 		$dataForTransferTypeChart[$transferTypesNamesArray[$i]][$distinctMonths[$x]]= 0;
 	}
 }
 
-//select data from database for chart 3
-//---------------SELECT DATA FROM DATABASE---------------//
+//---------------SELECT DATA FROM DATABASE FOR CHART 3---------------//
 $querySelectDataForChart3 = "
 	SELECT 
 		transactionType, 
@@ -340,13 +325,16 @@ if ($num>0){
 	ReportErrorForEmptyExcelFile();
 }
 
+//Delete values from the current table 
+//After all quering is done I keep the database empty.
+$queryDelete = "DELETE FROM ChepReport WHERE 1 = 1";
+$resultDelete = mysqli_query($shortageReportDB, $queryDelete);
+
 mysqli_close($shortageReportDB);
-$arrayForFrontEnd += array("errors"=>$errors, "resultArray"=>$resultArray, "distinctMonths"=>$distinctMonths, "numberOfMonths"=>$numberOfMonths);
-$arrayForFrontEnd += array("distinctSuppliersNamesArray"=>$distinctSuppliersNamesArray);
-$arrayForFrontEnd += array("startDate"=>$startDate, "endDate"=>$endDate);
-$arrayForFrontEnd += array("dataForTransferTypeChart"=>$dataForTransferTypeChart);
-$arrayForFrontEnd += array("transferTypseSumsArray"=>$transferTypseSumsArray);
-$arrayForFrontEnd += array("palletsIN"=>$palletsIN, "palletsOUT"=>$palletsOUT);
+$arrayForFrontEnd += array("errors"=>$errors, "resultArray"=>$resultArray, "distinctMonths"=>$distinctMonths);
+$arrayForFrontEnd += array("distinctSuppliersNamesArray"=>$distinctSuppliersNamesArray, "dataForTransferTypeChart"=>$dataForTransferTypeChart);
+$arrayForFrontEnd += array("startDate"=>$startDate, "endDate"=>$endDate, "transferTypseSumsArray"=>$transferTypseSumsArray);
+$arrayForFrontEnd += array("palletsIN"=>$palletsIN, "palletsOUT"=>$palletsOUT, "transferTypesNamesArray"=>$transferTypesNamesArray);
 
 $jsonFile = json_encode($arrayForFrontEnd);
 echo $jsonFile;
