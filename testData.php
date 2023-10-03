@@ -1,7 +1,7 @@
 <?php
 date_default_timezone_set("Europe/London");
-error_reporting( E_ALL );
-  ini_set( "display_errors", 1 ); 
+/*error_reporting( E_ALL );
+  ini_set( "display_errors", 1 ); */
 $errors = array();
 //only run scripts if the request method is post
 if ( $_SERVER[ 'REQUEST_METHOD' ] != 'POST' ){
